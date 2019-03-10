@@ -3,13 +3,16 @@ import java.util.*;
 import java.io.*;
 public class USACO{
   public static void main(String[] args) {
-    System.out.println(bronze("makelake.in"));
-    System.out.println(silver("ctravel.in"));
+    //System.out.println(bronze("makelake.in"));
+    //System.out.println(silver("ctravel.in"));
   }
   public static int bronze(String filename) {
+    //  initializes variables to store future values
     int R = 0, C = 0, E = 0, N = 0;
     int[][] map = new int[0][0];
     ArrayList<Stomp> instructs = new ArrayList<Stomp>();
+
+    //  reads the file and stores values
     try {
       File f = new File(filename);
       Scanner in = new Scanner(f);
@@ -54,6 +57,7 @@ public class USACO{
       return 0;
     }
 
+    //  performs stomp instructions
     for (int i = 0; i < N; i++) {
       Stomp ins = instructs.get(i);
       int threshold = 0;
@@ -72,6 +76,7 @@ public class USACO{
       }
     }
 
+    //  converts elevations into final depths
     for (int r = 0; r < map.length; r++) {
       for (int c = 0; c < map[r].length; c++) {
         if (E - map[r][c] <= 0) map[r][c] = 0;
@@ -79,6 +84,7 @@ public class USACO{
       }
     }
 
+    //  finds total aggregated depths
     int totalDepth = 0;
     for (int r = 0; r < map.length; r++) {
       for (int c = 0; c < map[r].length; c++) {
@@ -86,11 +92,15 @@ public class USACO{
       }
     }
 
+    //  returns volume
     return totalDepth * 5184;
   }
   public static int silver(String filename) {
+    //  initializes variables to store future values
     int N = 0, M = 0, T = 0, R1 = 0, C1 = 0, R2 = 0, C2 = 0;
     char[][] map = new char[0][0];
+
+    //  reads the file and stores values
     try {
       File f = new File(filename);
       Scanner in = new Scanner(f);
@@ -121,10 +131,10 @@ public class USACO{
           Scanner s = new Scanner(in.nextLine());
           int index = 0;
           while (s.hasNextInt()) {
-            if (index == 0) R1 = s.nextInt();
-            if (index == 1) C1 = s.nextInt();
-            if (index == 2) R2 = s.nextInt();
-            if (index == 3) C2 = s.nextInt();
+            if (index == 0) R1 = s.nextInt() - 1;
+            if (index == 1) C1 = s.nextInt() - 1;
+            if (index == 2) R2 = s.nextInt() - 1;
+            if (index == 3) C2 = s.nextInt() - 1;
             index++;
           }
         }
@@ -135,20 +145,65 @@ public class USACO{
       return 0;
     }
 
-    for (int r = 0; r < map.length; r++) {
-      for (int c = 0; c < map[r].length; c++) {
-        System.out.print(map[r][c] + " ");
-      }
-      System.out.println();
-    }
-    return 0;
+    //  calls on helper function to return answer
+    return silverSolve(map, T, R1, C1, R2, C2);
   }
+  //  helper function makes a new 2D array of Tiles the same size as the map, initializes it with values,
+  //  and loops thru number of T to set the values of adjacent Tiles;  Returns the value at (R2, C2)
+  private static int silverSolve(char[][] map, int time, int sRow, int sCol, int eRow, int eCol) {
+    int[][] moves = {{1,0}, {-1,0}, {0,1}, {0,-1}};
+    Tile[][] optimizedBoard = new Tile[map.length][map[0].length];
+    for (int r = 0; r < optimizedBoard.length; r++) {
+      for (int c = 0; c < optimizedBoard[r].length; c++) {
+        if (map[r][c] == '*') optimizedBoard[r][c] = new Tile(-1, -1);
+        else optimizedBoard[r][c] = new Tile(0, 0);
+      }
+    }
+    optimizedBoard[sRow][sCol] = new Tile(1, 0);
+    for (int counter = time; counter > 0; counter--) {
+      for (int r = 0; r < optimizedBoard.length; r++) {
+        for (int c = 0; c < optimizedBoard[r].length; c++) {
+          if (optimizedBoard[r][c].dom > 0) {
+            for (int i = 0; i < moves.length; i++) {
+              int row = r + moves[i][0];
+              int col = c + moves[i][1];
+              if (row >= 0 && row < optimizedBoard.length && col >= 0 && col < optimizedBoard[r].length) {
+                if (optimizedBoard[row][col].dom != -1) optimizedBoard[row][col].setHid(optimizedBoard[r][c].dom);
+              }
+            }
+
+          }
+        }
+      }
+      for (int r = 0; r < optimizedBoard.length; r++) {
+        for (int c = 0; c < optimizedBoard[r].length; c++) {
+          optimizedBoard[r][c].dom = optimizedBoard[r][c].hid;
+          if (optimizedBoard[r][c].hid != -1) optimizedBoard[r][c].hid = 0;
+        }
+      }
+    }
+    return optimizedBoard[eRow][eCol].dom;
+  }
+
 }
+
+//  helper class to store values easier
 class Stomp {
   int row, col, depth;
   public Stomp(int r, int c, int d) {
     row = r;
     col = c;
     depth = d;
+  }
+}
+//  helper class to store dominant and hidden values easier; switch between dominant and hidden is made in silverSolve's T loop itself
+class Tile {
+  int dom, hid;
+  public Tile(int dominant, int hidden) {
+    dom = dominant;
+    hid = hidden;
+  }
+  public void setHid(int value) {
+    hid += value;
   }
 }
